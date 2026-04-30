@@ -24,9 +24,7 @@ app.use(express.json());
 
 // Enable CORS
 app.use(cors({
-  origin: [
-    "https://task-1w4p.vercel.app"
-  ],
+  origin: ["https://task-1w4p.vercel.app", "http://localhost:5174", "http://localhost:5173"],
   credentials: true
 }));
 
@@ -42,8 +40,17 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Root route for pinging
+app.get('/', (req, res) => {
+  res.send('API is running....');
+});
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  });
+}
+
+module.exports = app;
