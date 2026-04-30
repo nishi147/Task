@@ -14,9 +14,6 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // Body parser
@@ -33,6 +30,17 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Connect to database lazily on every request for serverless
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ message: 'Database connection failed. Please check backend environment variables.' });
+  }
+});
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -43,6 +51,15 @@ app.use('/api/dashboard', dashboardRoutes);
 // Root route for pinging
 app.get('/', (req, res) => {
   res.send('API is running....');
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack
+  });
 });
 
 const PORT = process.env.PORT || 5000;
